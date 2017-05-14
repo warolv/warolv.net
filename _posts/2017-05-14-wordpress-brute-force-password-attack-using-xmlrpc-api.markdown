@@ -26,7 +26,10 @@ The simplest way to check if XML-RPC API enabled(default) in your wordpress is b
 [WPScan](https://wpscan.org/) - great tool for wordpress information gathering and password brute force  
 [Nmap with http-wordpress-brute script](https://nmap.org/nsedoc/scripts/http-wordpress-brute.html) - performs brute force password auditing against Wordpress CMS/blog installations.
 
-Let's start to build simple script which will find admin password for wordpress using dictionary, I am using simple [sucuri dictionary](https://github.com/danielmiessler/SecLists/blob/master/Passwords/Sucuri_Top_Wordpress_Passwords.txt) as default for out brute force attack.
+#### Let's do it ####
+Let's start to build simple script which will find admin password for wordpress using dictionary, I am using simple [sucuri dictionary](https://github.com/danielmiessler/SecLists/blob/master/Passwords/Sucuri_Top_Wordpress_Passwords.txt) as default for out brute force attack.  
+We will use ['wp.getUsersBlogs'](https://codex.wordpress.org/XML-RPC_wp) method for our purposes, to retrieve the blogs of the users. This method receives username and password and returns array of values. In case of success we getting array with user's info, otherwise xmlrpc call throws exception, see the code below to understand better.
+
 
 Our script will use [xml-rpc client for ruby](https://ruby-doc.org/stdlib-2.3.1/libdoc/xmlrpc/rdoc/XMLRPC/Client.html)
 
