@@ -7,7 +7,7 @@ categories: [wordpress hacking, web security]
 description: wordpress passive information gathering, wordpress single page analysis
 keywords: wordpress info gathering, wordpress information gathering, wordpress passive information gathering, wordpress hacking, wordpress single page analysis
 sharing: true
-draft: true
+draft: false
 ---
 <img src="{{ root_url }}/images/wordpress-analysis.png" align="right"/> 
 
@@ -58,13 +58,11 @@ To find the location of XML-RPC, look for two link tags with attributes “pingb
 
 Let's find links with ruby:
 ``` ruby   
-  require 'nokogiri'
-  require 'net/http'
-  require 'open-uri'
+  doc.xpath("//link[@rel='pingback']/@href").each do |attr|
+    puts attr.value
+  end
 
-  url = 'http://www.example.com' # Put url of your site here
-  doc = Nokogiri::HTML(open(url).read)
-  doc.xpath("//meta[@name='generator']/@content").each do |attr|
+  doc.xpath("//link[@rel='EditURI']/@href").each do |attr|
     puts attr.value
   end
 ``` 
@@ -95,16 +93,13 @@ This link tag indicates that the WordPress site is using REST API:
 
 Let's find this link with ruby:
 ``` ruby   
-  require 'nokogiri'
-  require 'net/http'
-  require 'open-uri'
-
-  url = 'http://www.example.com' # Put url of your site here
-  doc = Nokogiri::HTML(open(url).read)
-  doc.xpath("//meta[@name='generator']/@content").each do |attr|
+  doc.xpath("//link[@rel='https://api.w.org/']/@href").each do |attr|
     puts attr.value
   end
 ``` 
+
+If this tag exist in html, REST API enabled. 
+
 [How to Disable XML-RPC in WordPress](http://www.wpbeginner.com/plugins/how-to-disable-xml-rpc-in-wordpress/)
 
 
@@ -137,15 +132,16 @@ Knowing the plugins used, you can find ways to exploit.
 
 Let's extract plugins with ruby:
 ``` ruby   
-  require 'nokogiri'
-  require 'net/http'
-  require 'open-uri'
+  all_links = doc.xpath('//@href | //@src').map(&:value)
+  plugin_links = links.find_all{|l| l.include?('/wp-content/plugins/')}
 
-  url = 'http://www.example.com' # Put url of your site here
-  doc = Nokogiri::HTML(open(url).read)
-  doc.xpath("//meta[@name='generator']/@content").each do |attr|
-    puts attr.value
+  plugins = []
+  plugin_links.each do |link|
+    link_parts = link.split('/')
+    plugins << link_parts[link_parts.index('plugins') + 1]
   end
+
+  p plugins.uniq
 ``` 
 
 #### Discover wordpress themes ####
@@ -177,15 +173,16 @@ Knowing which themes are used, you can look for ways to exploit.
 
 Let's do it with ruby:
 ``` ruby   
-  require 'nokogiri'
-  require 'net/http'
-  require 'open-uri'
+  all_links = doc.xpath('//@href | //@src').map(&:value)
+  theme_links = links.find_all{|l| l.include?('/wp-content/themes/')}
 
-  url = 'http://www.example.com' # Put url of your site here
-  doc = Nokogiri::HTML(open(url).read)
-  doc.xpath("//meta[@name='generator']/@content").each do |attr|
-    puts attr.value
+  themes = []
+  theme_links.each do |link|
+    link_parts = link.split('/')
+    themes << link_parts[link_parts.index('themes') + 1]
   end
+
+  p themes.uniq
 ``` 
 
 #### Conlusion ####
@@ -193,4 +190,4 @@ Of course, we may gather even more info by additional requests; for example, we 
 We can also get more information about the plugins and themes by analyzing downloaded JS files and CSS files, as well as by analyzing “http” headers.
 But the purpose of this post is to show that you can get a lot of information about WordPress from just a single-page analysis.
 
-Thank you for reading my post. Soon, I plan to create script that will automate this entire process, and you will be able to download and use it.
+Thank you for reading my post. Soon, I plan to create script that will automate this entire process, and you will be able to [download](https://github.com/warolv/wordpress-scripts/blob/master/wp_single_page_analysis.rb) and use it.
